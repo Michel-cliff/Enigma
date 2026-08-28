@@ -128,7 +128,7 @@
   const reel    = document.getElementById('reel');
   const spinBtn = document.getElementById('spin');
 
-  const list = SUJETS.filter(s => s && s.trim());
+  let list = SUJETS.filter(s => s && s.trim());
   let pos = 0;
   let spinning = false;
 
@@ -205,7 +205,23 @@
   });
 
   window.addEventListener('resize', () => apply());
+
+  // Charge les sujets depuis sujets-enigma.csv (source éditable sans toucher au code).
+  // Repli sur la liste SUJETS ci-dessus si le fetch échoue (ex. ouverture en file://).
+  async function loadSubjects(){
+    try{
+      const res = await fetch('./sujets-enigma.csv', {cache:'no-store'});
+      if(!res.ok) return [];
+      const txt = await res.text();
+      return txt.split(/\r?\n/)
+        .map(l => l.trim())
+        .filter(l => l && l.toLowerCase() !== 'sujet')
+        .map(l => l.replace(/^"([\s\S]*)"$/, '$1').replace(/""/g, '"'));
+    }catch(e){ return []; }
+  }
+
   render();
+  loadSubjects().then(subs => { if(subs.length){ list = subs; pos = 0; render(); } });
 })();
 </script>
 </body>
